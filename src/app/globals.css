@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 
+body{
+  font-family: var(Poppins);
+} */
+
+.ant-select > .ant-select-selector{
+  border-radius: 1rem
+}
+/* .ant-select-selection-placeholder{
+  color: aqua;
+} */
