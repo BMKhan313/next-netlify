@@ -81,7 +81,7 @@ const handleSubmit = async (values, { setSubmitting, resetForm }) => {
       setState({show_login_loading: false})
       router.push('/cred-dashboard')
       // const token = res.token;
-      // console.log('mytoken',token),
+   
       // router.push({
       // pathname: '/cred-dashboard',
       // query: { token: token }, // Pass the token as a query parameter
