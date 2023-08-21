@@ -9,12 +9,8 @@ export default async function page(){
   return (
     <div className="bg-[#EFEFEF] font-poppins flex overflow-y-hidden">
     <div className='flex overflow-hidden w-full'>
-        
-      
-         
           <SideBar />
            <div className='flex flex-col  overflow-y-auto w-[100%]'>
-         
             <Header />
            <AccessControl />
            </div>
