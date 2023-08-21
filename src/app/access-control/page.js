@@ -10,14 +10,12 @@ export default async function page(){
     <div className="bg-[#EFEFEF] font-poppins flex overflow-y-hidden">
     <div className='flex overflow-hidden w-full'>
         
-        {/* <Suspense fallback={<div>Loading...</div>}> */}
+      
          
           <SideBar />
-         {/* </Suspense> */}
            <div className='flex flex-col  overflow-y-auto w-[100%]'>
-           {/* <Suspense fallback={<div>Loading...</div>}> */}
+         
             <Header />
-             {/* </Suspense> */}
            <AccessControl />
            </div>
         </div>
