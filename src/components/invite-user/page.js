@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import axios from 'axios';
 
 const InviteUser = () => {
   
@@ -25,7 +26,6 @@ const InviteUser = () => {
   
   const onChange = (e) => {
     setValue(e.target.value)
-    console.log('val',value)
   }
    const initialValues = {
     username: '',
@@ -37,119 +37,135 @@ const InviteUser = () => {
     
      var username = values.username
      var initpassword = values.initpassword
-     
-    await fetch(`${STG_URL}/creds-manager/invite-user`,{
-      // mode: 'no-cors',
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body: JSON.stringify({
-        email: username,
-        password: initpassword,
-        url: btoa(window.location.href)
-      }),
-    })
-    .then(response => {
-      return response.json()
-    })
-    .then(function(res) {
-      const {success} = res
-      if(success){
-        Swal.fire({
-          icon: "success",
-          title: res.data.msg,
-          text:  res.data.msg,
-          timer: 10000,
-       })
-      }else if(!success){
-        Swal.fire({
-          icon: "error",
-          title: res.data[0],
-          timer: 10000,
-       })
-      } 
-      if(username === "") {
-        Swal.fire({
-          icon: "error",
-          // title: res.data[0],
-          title:  res.data[0].email[0],
-          timer: 10000,
-       })
-      }
-  
-    })
-    .catch(e => {
-      Swal.fire({
-        icon: "error",
-        title: "Something went wrong!",
-        text: "Please check your internet connection",
-        timer: 10000,
-      })
-    })
-  
+    
+
+// ... other code ...
+
+try {
+  const response = await axios.post(`${STG_URL}/creds-manager/invite-user`, {
+    email: username,
+    password: initpassword,
+    url: btoa(window.location.href),
+  }, {
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    }
+  });
+
+  const res = response.data;
+  const { success } = res;
+
+  if (success) {
+    Swal.fire({
+      icon: "success",
+      title: res.data.msg,
+      text: res.data.msg,
+      timer: 10000,
+    });
+  } else {
+    Swal.fire({
+      icon: "error",
+      title: res.data[0],
+      timer: 10000,
+    });
+  }
+
+  if (username === "") {
+    Swal.fire({
+      icon: "error",
+      title: res.data[0].email[0],
+      timer: 10000,
+    });
+  }
+} catch (error) {
+  const res2 = error.response;
+          // console.log('res2',res2.status)
+          if(res2.data.message == "Unauthenticated." && res2.status !== 200){
+            Swal.close();
+            Swal.fire({
+              icon: "error",
+              title: res2.data.message,
+              text: "Token expired",
+              timer: 10000,
+            });
+          }else{
+            Swal.fire({
+              icon: "error",
+              title: "Something went wrong!",
+              text: "Failed",
+              timer: 10000,
+            });
+          }
+}
  
 }
 const handlesubmit_create = async (values, { setSubmitting, resetForm }) => {
   
   const password = values.initpassword
-
- await fetch(`${STG_URL}/creds-manager/invite-user`,{
-    // mode: 'no-cors',
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: "Bearer " + token
-    },
-    body: JSON.stringify({
+ 
+  try {
+    const response = await axios.post(`${STG_URL}/creds-manager/invite-user`, {
       email: username,
       password: password,
       // password_confirmation: ,
       // company_code: ,
       // token: ,
-    }),
-  })
-  .then(response => {
-    return response.json()
-  })
-  .then(function(res) {
-    const {success} = res
-    console.log('res',res)
-    if(success){
+    }, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      }
+    });
+  
+    const res = response.data;
+    const { success } = res;
+    
+    if (success) {
       Swal.fire({
         icon: "success",
         title: "Registered",
-        text:  res.data[0],
+        text: res.data[0],
         timer: 10000,
-     })
-    }else if(!success){
+      });
+    } else {
       Swal.fire({
         icon: "error",
         title: res.data[0],
         timer: 10000,
-     })
-    } 
-    if(username === "") {
+      });
+    }
+  
+    if (username === "") {
       Swal.fire({
         icon: "error",
-        // title: res.data[0],
-        title:  res.data[0].email[0],
+        title: res.data[0].email[0],
         timer: 10000,
-     })
+      });
     }
-
-  })
-  .catch(e => {
-    Swal.fire({
-      icon: "error",
-      title: "Something went wrong!",
-      text: "Please check your internet connection",
-      timer: 10000,
-    })
-  })
+  } catch (error) {
+    const res2 = error.response;
+    // console.log('res2',res2.status)
+    if(res2.data.message == "Unauthenticated." && res2.status !== 200){
+      Swal.close();
+      Swal.fire({
+        icon: "error",
+        title: res2.data.message,
+        text: "Token expired",
+        timer: 10000,
+      });
+    }else{
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong!",
+        text: "Failed",
+        timer: 10000,
+      });
+    }
+  }
+  
 
 }
 

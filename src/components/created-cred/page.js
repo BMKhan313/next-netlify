@@ -9,6 +9,7 @@ const PasswordPopup = lazy(()=>import('./passwordPopup'))
 import { useDispatch , useSelector} from "react-redux"
 import { STG_URL } from "../constants/page";
 import Swal from "sweetalert2"
+import axios from "axios";
 
 const CreatedCred = () => {
 
@@ -18,9 +19,16 @@ const CreatedCred = () => {
   const companyName = useSelector((state) => state.auth.company_name)
   const company_code = useSelector((state) => state.auth.createdcompany_code)
   const successusers = useSelector((state) => state.auth.successusers)
-
-  
-const groupedData = {};
+ 
+  if(token == undefined){
+    Swal.fire({
+      icon: "error",
+      title: "Unauthenticated",
+      text: "Token expired",
+      timer: 10000,
+    });
+  }else{
+    var groupedData = {};
 
 successusers?.forEach(item => {
     const { company_code, type, email } = item;
@@ -30,12 +38,15 @@ successusers?.forEach(item => {
     groupedData[company_code][type] = email;
 });
 
-const dataSource = Object.entries(groupedData).map(([companyCode, emails]) => ({
+var dataSource = Object.entries(groupedData).map(([companyCode, emails]) => ({
     key: companyCode,
     companyCode,
     ...emails,
     companyName: companyName
 }));
+  }
+  
+
 
    const columns = [
     
@@ -74,53 +85,98 @@ const dataSource = Object.entries(groupedData).map(([companyCode, emails]) => ({
 
 
   const handleSendViaEmail = async() => {
-
-    await fetch(`${STG_URL}/creds-manager/send-via-email`,{
-    
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body: JSON.stringify({
+    try {
+      const response = await axios.post(`${STG_URL}/creds-manager/send-via-email`, {
         org_name: companyName,
         org_code: dataSource[0].companyCode,
         admin: dataSource[0].admin || "",
         hrAdmin: dataSource[0].hradmin || "",
-        superAdmin: dataSource[0].superadmin || ""
-      }),
-    })
-    .then(response => {
-      return response.json()
-    })
-    .then(function(res) {
-      const success = res.success
-      if(success){
+        superAdmin: dataSource[0].superadmin || "",
+      }, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        }
+      });
+    
+      const res = response.data;
+      const success = res.success;
+    
+      if (success) {
         Swal.fire({
           icon: "success",
           title: "Sent",
-          text:  res.data[0],
+          text: res.data[0],
           timer: 10000,
-       })
-      }else if(!success){
+        });
+      } else {
         Swal.fire({
           icon: "error",
           title: res.data[0],
           timer: 10000,
-       })
-      } 
+        });
+      }
+    } catch (error) {
+
+      const res2 = error.response;
+      // console.log('res2',res2.status)
+      if(res2.data.message == "Unauthenticated." && res2.status !== 200){
+        Swal.close();
+        Swal.fire({
+          icon: "error",
+          title: res2.data.message,
+          text: "Token expired",
+          timer: 10000,
+        });
+      }
+    }
+    // await fetch(`${STG_URL}/creds-manager/send-via-email`,{
+    
+    //   method: "POST",
+    //   headers: {
+    //     Accept: "application/json",
+    //     "Content-Type": "application/json",
+    //     Authorization: "Bearer " + token
+    //   },
+    //   body: JSON.stringify({
+    //     org_name: companyName,
+    //     org_code: dataSource[0].companyCode,
+    //     admin: dataSource[0].admin || "",
+    //     hrAdmin: dataSource[0].hradmin || "",
+    //     superAdmin: dataSource[0].superadmin || ""
+    //   }),
+    // })
+    // .then(response => {
+    //   return response.json()
+    // })
+    // .then(function(res) {
+    //   const success = res.success
+    //   if(success){
+    //     Swal.fire({
+    //       icon: "success",
+    //       title: "Sent",
+    //       text:  res.data[0],
+    //       timer: 10000,
+    //    })
+    //   }else if(!success){
+    //     Swal.fire({
+    //       icon: "error",
+    //       title: res.data[0],
+    //       timer: 10000,
+    //    })
+    //   } 
       
   
-    })
-    .catch(e => {
-      Swal.fire({
-        icon: "error",
-        title: "Something went wrong!",
-        text: "Please check your internet connection",
-        timer: 10000,
-      })
-    })
+    // })
+    // .catch(e => {
+    //   Swal.fire({
+    //     icon: "error",
+    //     title: "Something went wrong!",
+    //     text: "Please check your internet connection",
+    //     timer: 10000,
+    //   })
+    // })
   }
   
 

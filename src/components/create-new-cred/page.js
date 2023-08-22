@@ -10,11 +10,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { createdInfo, orgName } from "@/redux/slice/reduxSlice";
 import { useEffect } from "react";
 import { Select,Form } from 'antd';
+import axios from 'axios';
 const { Option } = Select;
 
 
 const CreateNewCred = () => {
-
+  
   const [orgcode, setOrgcode] = useState()
   const [orgname, setOrgname] = useState('')
   const [checkValue, setCheckValue] = useState(['admin'])
@@ -44,22 +45,30 @@ const CreateNewCred = () => {
   ];
   useEffect(() => {
     const fetchOrgs = async () => {
-      fetch(`${STG_URL}/creds-manager/organizations`, {
-
-        method: "GET",
+      axios.get(`${STG_URL}/creds-manager/organizations`, {
         headers: {
           "Accept": "application/json",
           "Content-Type": "application/json",
-          Authorization: 'Bearer ' + token
-        },
-      }).then(response => {
-        return response.json()
+          Authorization: 'Bearer ' + token,
+        }
       })
-        .then((res) => {
-          setOrganizations(res.data)
-
-        }).catch(function (error) {
-          console.log(error);
+        .then(response => {
+          const res = response.data;
+          setOrganizations(res.data);
+        })
+        .catch(error => {
+          // console.log('err..',error);
+          const res2 = error.response;
+          // console.log('res2',res2.status)
+          if(res2.data.message == "Unauthenticated." && res2.status !== 200){
+            Swal.close();
+            Swal.fire({
+              icon: "error",
+              title: res2.data.message,
+              text: "Token expired",
+              timer: 10000,
+            });
+          }
         });
     }
     fetchOrgs()

@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { returnApiToken } from "@/redux/slice/reduxSlice";
 import { companyCode } from "@/redux/slice/reduxSlice";
+import axios from "axios";
 
 const AccessControl = () => {
   
@@ -189,61 +190,67 @@ const AccessControl = () => {
 
   useEffect(() => {
     
-    fetch(`${STG_URL}/creds-manager/companies?paginationNumber=${perPage}`,{
-    
-      method: "GET",
+    axios.get(`${STG_URL}/creds-manager/companies?paginationNumber=${perPage}`, {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-    })
-    .then(res => {
-      return res.json()
-    })
-    .then(function(res) {
-      ///4
-      const combinedAdmins = [];
-for (const key in res.data) {
-    const company = res.data[key];
-    if (company.admin) {
-        combinedAdmins.push({ company_code: company.company_code, email: company.admin });
-    }
-    if (company.hradmin) {
-        combinedAdmins.push({ company_code: company.company_code, email: company.hradmin });
-    }
-    if (company.superadmin) {
-      combinedAdmins.push({ company_code: company.company_code, email: company.superadmin });
-  }
-}
-      if(res.success){
-        setData(combinedAdmins)
-        setFilterData(combinedAdmins)
-        setTotalMails(combinedAdmins.length)
-        setPerPage(res.pagination.pagination.per_page)
-        setTotalPages(res.pagination.pagination.total)
-      }else if(!res.success){
-        Swal.close();
-         Swal.fire({
-            icon: "error",
-            title: "Something3 went wrong!",
-            text:  "Failed",
-            timer: 10000,
-         })
-        
+        Authorization: "Bearer " + token,
       }
-
     })
-    .catch(e => {
-      Swal.fire({
-        icon: "error",
-        title: "Something went wrong!",
-        text: "Please check your internet connection",
-        timer: 10000,
+      .then(response => {
+        const res = response.data;
+    
+        const combinedAdmins = [];
+        for (const key in res.data) {
+          const company = res.data[key];
+          if (company.admin) {
+            combinedAdmins.push({ company_code: company.company_code, email: company.admin });
+          }
+          if (company.hradmin) {
+            combinedAdmins.push({ company_code: company.company_code, email: company.hradmin });
+          }
+          if (company.superadmin) {
+            combinedAdmins.push({ company_code: company.company_code, email: company.superadmin });
+          }
+        }
+    
+        if (res.success) {
+          setData(combinedAdmins);
+          setFilterData(combinedAdmins);
+          setTotalMails(combinedAdmins.length);
+          setPerPage(res.pagination.pagination.per_page);
+          setTotalPages(res.pagination.pagination.total);
+        } else {
+          Swal.close();
+          Swal.fire({
+            icon: "error",
+            title: "Something went wrong!",
+            text: "Failed",
+            timer: 10000,
+          });
+        }
       })
-    })
+      .catch(error => {
+        const res2 = error.response;
+          // console.log('res2',res2.status)
+          if(res2.data.message == "Unauthenticated." && res2.status !== 200){
+            Swal.close();
+            Swal.fire({
+              icon: "error",
+              title: res2.data.message,
+              text: "Token expired",
+              timer: 10000,
+            });
+          }else{
+            Swal.fire({
+              icon: "error",
+              title: "Something went wrong!",
+              text: "Failed",
+              timer: 10000,
+            });
+          }
+      });
   
-
   
 }, [perPage,toggle])
 

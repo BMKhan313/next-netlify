@@ -16,19 +16,17 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { Popconfirm } from 'antd';
 import Swal from "sweetalert2"
+import axios from "axios";
 import { STG_URL } from "../constants/page";
 import Boxes from "../Boxes";
 import { useRouter } from "next/navigation";
 import { editUser } from "@/redux/slice/reduxSlice";
 import CryptoJS from "crypto-js";
+import { useParams } from 'next/navigation'
 
 const CredDashboard = () => {
  
  
- 
-  // const router = useRouter()
-  // const { token } = router.query;
-  // console.log('token in creddash', token2)
   const [flag, setFlage] = useState(true)
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
@@ -39,12 +37,8 @@ const CredDashboard = () => {
   const [data, setData] = useState([])
   const [searchResults, setSearchResults] = useState(data);
 
+  const router = useRouter();
   const token  = useSelector((state) => state.auth.token)
-  //decrypted logic
-  // var token2 = localStorage.getItem('token2');
-  // var secretKey = 'my-secret-key'
-  // var token = CryptoJS.AES.decrypt(token2, secretKey);
-  // console.log('my decrypted token',token)
 
   const dispatch = useDispatch()
 
@@ -227,66 +221,70 @@ const CredDashboard = () => {
       ),
     },
   ];
+ 
 
   useEffect(() => {
-
-    fetch(`${STG_URL}/creds-manager/companies?paginationNumber=${perPage}`, {
-
-      method: "GET",
+    axios.get(`${STG_URL}/creds-manager/companies?paginationNumber=${perPage}`, {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-
+        Authorization: "Bearer " + token,
+      }
     })
-      .then(res => {
-        return res.json()
-      })
-      .then(function (res) {
-
+      .then(response => {
+        const res = response.data;
+    
         const array = Object.entries(res.data);
-
+    
         const companies = [];
-
+    
         for (const [key, value] of array) {
           companies.push({
             company_code: key.toString(),
             company_name: value.company_name,
             admin: value.admin,
             hradmin: value.hradmin,
-            superadmin: value.superadmin
+            superadmin: value.superadmin,
           });
         }
-        const { data, success } = res
-        
-        if (success) {
-          setFlage(false)
-          setData(companies)
-          setSearchResults(companies)
-          setPerPage(res.pagination.pagination.per_page)
-          setTotalPages(res.pagination.pagination.total)
-          // setTotalPages(data.length)
-        } else if (!success) {
+    
+        if (res.success) {
+          setFlage(false);
+          setData(companies);
+          setSearchResults(companies);
+          setPerPage(res.pagination.pagination.per_page);
+          setTotalPages(res.pagination.pagination.total);
+        } else {
           Swal.close();
           Swal.fire({
             icon: "error",
             title: "Something went wrong!",
             text: "Failed",
             timer: 10000,
-          })
-
+          });
         }
-
       })
-      .catch(e => {
-        Swal.fire({
+      .catch(error => {
+        // console.log('error', error);
+        const res2 = error.response;
+        // console.log('res2',res2.status)
+        if(res2.data.message == "Unauthenticated." && res2.status !== 200){
+          Swal.close();
+          Swal.fire({
+            icon: "error",
+            title: res2.data.message,
+            text: "Token expired",
+            timer: 10000,
+          });
+        }
+      else
+        { Swal.fire({
           icon: "error",
           title: "Something went wrong!",
           text: "Please check your internet connection",
           timer: 10000,
-        })
-      })
+        });}
+      });
   }, [perPage, flag])
 
 

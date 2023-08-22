@@ -2,24 +2,23 @@
 
 import React, { useState , useEffect} from 'react'
 import Image from 'next/image'
-import { useSelector, useDispatch } from 'react-redux'
-import {userInfo, isLogin }from '../../redux/slice/reduxSlice'
+import {  useDispatch } from 'react-redux'
+import {userInfo}from '../../redux/slice/reduxSlice'
 import Swal from "sweetalert2"
 import {STG_URL} from '../constants/page'
-import { Button } from '@mui/material'
 import botnosticlogo from '../assets/botnostic-logo.png'
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as yup from "yup";
 import { useRouter } from 'next/navigation'
-import CryptoJS from 'crypto-js'
+import axios from 'axios'
 
 const Login = () => {
  
   const [data, setData] = useState({})
   const [loading, setLoading] = useState(false);
-  // const [token, setToken] = useState('')
+ 
   const dispatch = useDispatch()
-  const router = useRouter();
+  const  router = useRouter();
   const [state, setState] = React.useState({
     show_login_loading: true,
     type: "default",
@@ -33,9 +32,7 @@ const Login = () => {
   username: '', password: ''
  }
 
-  const onSubmit = values => {
-    // console.log('form', values)
-  }
+ 
  const validationSchema = yup.object({
     username: yup.string().required('Required'),
     password: yup.string().required('Required')
@@ -49,65 +46,52 @@ const handleSubmit = async (values, { setSubmitting, resetForm }) => {
   if(state.show_login_loading){
         Swal.showLoading()
       }
-  await fetch(`${STG_URL}/creds-manager/login`,{
-    
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: username,
-      password: password,
-    }),
-  })
-  .then(response => {
-    return response.json()
-  })
-  .then(function(res) {
-   
-    setData(res)
-    const { user, success } = res
-    const email = user.email
-    // setToken(res.token)
-    // var token = res.token
-   
+      try {
+        const response = await axios.post(`${STG_URL}/creds-manager/login`, {
+          email: username,
+          password: password,
+        });
+        const res = response.data;
+        setData(res);
+  
+        const { success } = res;
+        // const success = res.success
+        // const email = user.email;
+        var token = res.token;
+  
+        if (success === true) {
+          dispatch(userInfo(res));
+          setState({ show_login_loading: false });
+          router.push(`/cred-dashboard`)
+          Swal.close();
+        }
+      } catch (error) {
+        const res2 = error.response.data;
+        if(res2.success == false && res2.status !== 200){
+          setState({ show_login_loading: false });
+          Swal.close();
+          Swal.fire({
+            icon: "error",
+            title: res2.data[0],
+            text: "Wrong login credentials",
+            timer: 10000,
+          });
+        }
+         else 
+        {
+          setState({ show_login_loading: false });
+          Swal.close();
+          Swal.fire({
+            icon: "error",
+            title: "Something went wrong!",
+            text: "Please Check Your Internet Connection",
+            timer: 10000,
+          });
+        }
+       
+      }
+  
 
-    dispatch(
-      userInfo(res)
-    )
-      
-    if(success){
-      setState({show_login_loading: false})
-      router.push('/cred-dashboard')
-      // const token = res.token;
-   
-      // router.push({
-      // pathname: '/cred-dashboard',
-      // query: { token: token }, // Pass the token as a query parameter
-      // });
-      Swal.close();
-      
-    }else if(success === false){
-     
-       Swal.fire({
-          icon: "error",
-          title: res.data[0],
-          text:  "Wrong login credentials",
-          timer: 10000,
-       })
-      
-    }
-
-  })
-  .catch(e => {
-    Swal.fire({
-      icon: "error",
-      title: "Something went wrong!",
-      text: "Please check your internet connection",
-      timer: 10000,
-    })
-  })
 };
  
   return (

@@ -47,9 +47,11 @@ const InviteVerification = () => {
     }
     if (urlParams.has("url")) {
       red_url = window.atob(urlParams.get("url"))
+      console.log('red_url',red_url)
     }
     if (urlParams.has("fhx")) {
       key = urlParams.get("fhx")
+      console.log('keyfhx',key)
     }
 
      base_url = "https://stg-console.mycareerdreams.com"
@@ -76,7 +78,7 @@ const InviteVerification = () => {
             if (red_url !== "") {
               window.location.assign(red_url)
             } else {
-              router.push ("/")
+              router.push ("https://stg-console.mycareerdreams.com")
             }
           } else {
             setState((prevState)=>({
@@ -91,7 +93,7 @@ const InviteVerification = () => {
        
         window.location.assign(red_url)
       } else {
-        router.push ("/")
+        router.push ("https://stg-console.mycareerdreams.com")
       }
     }
   }
